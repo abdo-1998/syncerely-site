@@ -1,0 +1,12 @@
+name: Remove a message
+description: Takes a message off the app. Only the repo owner's issues are used.
+title: "Remove message"
+labels: ["remove-message"]
+body:
+  - type: input
+    id: id
+    attributes:
+      label: Message id
+      description: The id from the message's issue (shown in its closing comment), or "all" to remove every message.
+    validations:
+      required: true
