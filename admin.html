@@ -37,6 +37,16 @@ textarea{min-height:84px;resize:vertical}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips button{border:0;background:var(--field);color:var(--sub);padding:8px 14px;border-radius:999px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .chips button.on{background:var(--blue);color:var(--bg)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.btn .spin{width:16px;height:16px}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.02em;border-radius:999px;padding:2px 8px;margin-left:6px;vertical-align:2px}
+.b-live{background:rgba(143,214,165,.18);color:var(--green)}.b-pub{background:rgba(169,193,247,.18);color:var(--blue)}
+.b-sched{background:rgba(246,193,119,.18);color:var(--amber)}.b-end{background:rgba(154,163,184,.18);color:var(--sub)}
+.steps{margin-top:14px;font-size:13px;display:grid;gap:6px}.steps div{color:var(--sub)}.steps .done{color:var(--green)}.steps .now{color:var(--text)}
+.head{display:flex;align-items:center;justify-content:space-between}.head h2{margin:28px 0 10px}
+.link{border:0;background:none;color:var(--blue);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:6px 0}
+.msg.gone{opacity:.55}
 .note{font-size:13px;margin-top:12px;min-height:20px}
 .ok{color:var(--green)}.err{color:var(--red)}
 .empty{color:var(--sub);font-size:14px;padding:6px 2px}
@@ -67,7 +77,8 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
   </section>
 
   <section id="app" hidden>
-    <h2>Live now</h2>
+    <div class="head"><h2>Messages</h2><button class="link" id="refresh">Refresh</button></div>
+    <div class="sub" id="siteState"></div>
     <div id="live"><div class="empty">Loading…</div></div>
 
     <h2>New message</h2>
@@ -97,6 +108,7 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
       <div id="preview"></div>
       <button class="btn" id="post" disabled>Post message</button>
       <div class="note" id="postNote"></div>
+      <div class="steps" id="steps" hidden></div>
     </div>
 
     <details><summary>This device</summary>
@@ -108,18 +120,31 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
 <script>
 const REPO="abdo-1998/syncerely-site", FILE="messages.json", API=`https://api.github.com/repos/${REPO}/contents/${FILE}`;
 const PLAY="https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely";
+const PUBLIC="https://abdo-1998.github.io/syncerely-site/messages.json";
 const $=id=>document.getElementById(id);
-let token=null, kind="normal", current={messages:[]}, sha=null;
+let token=null, kind="normal", current={messages:[]}, sha=null, site=null, siteAt=0, watching=null;
+const SPIN='<span class="spin"></span>';
+const busy=(btn,label)=>{btn.dataset.label=btn.dataset.label||btn.innerHTML;btn.disabled=true;btn.innerHTML=SPIN+label};
+const idle=btn=>{if(btn.dataset.label){btn.innerHTML=btn.dataset.label;delete btn.dataset.label}btn.disabled=false};
 try{token=localStorage.getItem("ghToken")}catch(e){}
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ICON={normal:'<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg>',critical:'<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'};
-function card(m,removable){
+function status(m){
+  const now=Date.now(), today=new Date().toISOString().slice(0,10);
+  if((m.endsAt&&m.endsAt<=now)||(m.expires&&m.expires<today))return ["Ended","b-end","Phones no longer show it. Remove it to tidy up."];
+  if(site&&!site.some(x=>x.id===m.id))return ["Publishing","b-pub","Saved; the site updates in about a minute."];
+  if(m.startsAt&&m.startsAt>now)return ["Scheduled","b-sched",""];
+  return site?["Live","b-live",""]:["","",""];
+}
+function card(m,removable,gone){
   const crit=m.severity==="critical";
+  const [st,cls,why]=removable&&!gone?status(m):gone?["Removing","b-pub","Removed; still on the site for about a minute."]:["","",""];
   const btn=crit&&m.link?`<div><span class="pill">${m.link.includes("play.google.com")?"Update":"Read more"}</span></div>`:"";
   const when=t=>new Date(t).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
   const meta=[m.startsAt&&m.startsAt>Date.now()?`from ${when(m.startsAt)}`:"",m.endsAt?`until ${when(m.endsAt)}`:"",m.expires?`until ${m.expires}`:"",m.minVersion!=null||m.maxVersion!=null?`versions ${m.minVersion??"any"}–${m.maxVersion??"any"}`:"",removable?`id ${m.id}`:""].filter(Boolean).join(" · ");
-  return `<div class="msg ${crit?"crit":""}">${ICON[crit?"critical":"normal"]}<div style="flex:1;min-width:0"><b>${esc(m.title||"Title")}</b><p>${esc(m.text||"Text")}</p>${btn}${meta?`<div class="meta">${esc(meta)}</div>`:""}</div>${removable?`<button class="rm" data-id="${esc(m.id)}">Remove</button>`:""}</div>`;
+  const badge=st?`<span class="badge ${cls}" title="${esc(why)}">${st}</span>`:"";
+  return `<div class="msg ${crit?"crit":""} ${gone?"gone":""}">${ICON[crit?"critical":"normal"]}<div style="flex:1;min-width:0"><b>${esc(m.title||"Title")}</b>${badge}<p>${esc(m.text||"Text")}</p>${btn}${meta?`<div class="meta">${esc(meta)}</div>`:""}${why&&st!=="Live"?`<div class="meta">${esc(why)}</div>`:""}</div>${removable&&!gone?`<button class="rm" data-id="${esc(m.id)}">Remove</button>`:""}</div>`;
 }
 const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,"")),c=>c.charCodeAt(0)));
 const b64e=s=>{const b=new TextEncoder().encode(s);let x="";b.forEach(c=>x+=String.fromCharCode(c));return btoa(x)};
@@ -128,24 +153,42 @@ async function gh(method,body){
   if(!r.ok){const e=new Error(r.status===401?"The token isn't valid any more. Forget it and connect again.":r.status===404||r.status===403?"The token can't change syncerely-site. Check it has Contents: Read and write on that repo.":r.status===409?"Someone changed the messages meanwhile. Try again.":`GitHub said ${r.status}.`);e.status=r.status;throw e}
   return r.json();
 }
+async function readSite(){
+  try{const r=await fetch(PUBLIC+"?t="+Date.now(),{cache:"no-store"});site=(await r.json()).messages||[];siteAt=Date.now()}catch(e){site=null}
+}
 async function load(){
-  const f=await gh("GET");sha=f.sha;
+  const [f]=await Promise.all([gh("GET"),readSite()]);sha=f.sha;
   try{current=JSON.parse(b64d(f.content));}catch(e){current={messages:[]}}
   current.messages=current.messages||[];render();
 }
 function render(){
-  $("live").innerHTML=current.messages.length?current.messages.map(m=>card(m,true)).join(""):'<div class="empty">No messages. Users see nothing extra on Home.</div>';
-  document.querySelectorAll(".rm").forEach(b=>b.onclick=()=>remove(b.dataset.id));
+  const gone=site?site.filter(x=>!current.messages.some(m=>m.id===x.id)):[];
+  const html=current.messages.map(m=>card(m,true,false)).concat(gone.map(m=>card(m,true,true))).join("");
+  $("live").innerHTML=html||'<div class="empty">No messages. Users see nothing extra on Home.</div>';
+  document.querySelectorAll(".rm").forEach(b=>b.onclick=()=>remove(b.dataset.id,b));
+  const pending=current.messages.some(m=>status(m)[0]==="Publishing")||gone.length>0;
+  $("siteState").innerHTML=site===null?"Couldn't read the public site just now.":pending?SPIN+"The site is updating. This list follows it.":`Site checked ${new Date(siteAt).toLocaleTimeString(undefined,{timeStyle:"short"})}. Open apps pick changes up within about 10 minutes.`;
+  if(pending&&!watching)watch();
+}
+// While something is publishing, re-read the public site every 5 s (up to 3 minutes).
+function watch(){
+  const start=Date.now();
+  watching=setInterval(async()=>{
+    await readSite();render();
+    const pending=current.messages.some(m=>status(m)[0]==="Publishing")||(site||[]).some(x=>!current.messages.some(m=>m.id===x.id));
+    if(!pending||Date.now()-start>180000){clearInterval(watching);watching=null;render()}
+  },5000);
 }
 async function save(next,what){
   const f=await gh("GET");
   const body={message:what,content:b64e(JSON.stringify(next,null,2)+"\n"),sha:f.sha};
   await gh("PUT",body);await load();
 }
-async function remove(id){
+async function remove(id,btn){
   const m=current.messages.find(x=>x.id===id);
-  if(!confirm(`Remove "${m?m.title:id}"? Phones drop it at their next daily check.`))return;
-  try{await save({...current,messages:current.messages.filter(x=>x.id!==id)},`Remove message ${id}`);note("postNote","Removed.",true)}catch(e){note("postNote",e.message,false)}
+  if(!confirm(`Remove "${m?m.title:id}"? Open apps drop it within about 10 minutes.`))return;
+  if(btn)busy(btn,"Removing");
+  try{await save({...current,messages:current.messages.filter(x=>x.id!==id)},`Remove message ${id}`)}catch(e){if(btn)idle(btn);alert(e.message)}
 }
 function draft(){
   const m={title:$("title").value.trim(),text:$("text").value.trim().replace(/\s+/g," ")};
@@ -172,7 +215,7 @@ function update(){
   const p=problem(m);$("post").disabled=!!p;note("postNote",m.title||m.text?(p||""):"",false);
 }
 function note(id,t,ok){const n=$(id);n.textContent=t;n.className="note "+(ok?"ok":"err")}
-document.querySelectorAll("#kind button").forEach(b=>b.onclick=()=>{kind=b.dataset.k;document.querySelectorAll("#kind button").forEach(x=>x.className=x===b?("on"+(kind==="critical"?" crit":"")):"");$("kindNote").textContent=kind==="critical"?"Warning colour, also one notification, no close button. It goes when it no longer applies, so set a last day or Up to version.":"A card with a close button.";update()});
+document.querySelectorAll("#kind button").forEach(b=>b.onclick=()=>{kind=b.dataset.k;document.querySelectorAll("#kind button").forEach(x=>x.className=x===b?("on"+(kind==="critical"?" crit":"")):"");$("kindNote").textContent=kind==="critical"?"Warning colour, also one notification, no close button. It goes when it no longer applies, so set an end time or Up to version.":"A card with a close button.";update()});
 ["title","text","link","minV","maxV"].forEach(id=>$(id).oninput=update);
 const local=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)};
 function pick(h){document.querySelectorAll("#dur button").forEach(b=>b.className=b.dataset.h==String(h)?"on":"");
@@ -185,20 +228,27 @@ $("post").onclick=async()=>{
   const slug=m.title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30);
   m.id=`${new Date().toISOString().slice(0,10)}-${slug}-${Math.random().toString(36).slice(2,6)}`;
   const ordered={id:m.id,...m};
-  $("post").disabled=true;note("postNote","Posting…",true);
+  busy($("post"),"Posting");note("postNote","",true);
+  const t0=Date.now(),steps=$("steps");steps.hidden=false;
+  const show=(a,b,c)=>steps.innerHTML=`<div class="${a}">${a==="now"?SPIN:"✓ "}Saved to GitHub</div><div class="${b}">${b==="now"?SPIN:b==="done"?"✓ ":"○ "}Live on the site${b==="done"?` (after ${Math.round((Date.now()-t0)/1000)} s)`:""}</div><div class="${c}">${c==="done"?"✓ ":"○ "}Phones: open apps within about 10 minutes, others when opened</div>`;
+  show("now","","");
   try{await save({...current,messages:[...current.messages,ordered]},`Post message: ${m.title}`);
-    ["title","text","link","starts","ends","minV","maxV"].forEach(id=>$(id).value="");pick(0);$("linkKind").value="";$("link").hidden=true;
-    note("postNote","Posted. It's live in about a minute; phones show it at their next daily check.",true);update();$("postNote").className="note ok";
-  }catch(e){note("postNote",e.message,false);$("post").disabled=false}
+    idle($("post"));["title","text","link","starts","ends","minV","maxV"].forEach(id=>$(id).value="");pick(0);$("linkKind").value="";$("link").hidden=true;update();
+    show("done","now","");
+    const until=Date.now()+180000;
+    while(Date.now()<until){await new Promise(r=>setTimeout(r,4000));await readSite();render();if(site&&site.some(x=>x.id===ordered.id)){show("done","done","done");return}}
+    steps.innerHTML+='<div class="err">The site hasn\'t updated after 3 minutes. GitHub may be slow; Refresh later.</div>';
+  }catch(e){idle($("post"));steps.hidden=true;note("postNote",e.message,false)}
 };
 $("connect").onclick=async()=>{
   token=$("token").value.trim();if(!token)return;
-  note("signinNote","Checking…",true);
-  try{await load();try{localStorage.setItem("ghToken",token)}catch(e){}show(true)}catch(e){token=null;note("signinNote",e.message,false)}
+  busy($("connect"),"Checking");note("signinNote","",true);
+  try{await load();try{localStorage.setItem("ghToken",token)}catch(e){}show(true)}catch(e){token=null;note("signinNote",e.message,false)}finally{idle($("connect"))}
 };
 $("signout").onclick=()=>{try{localStorage.removeItem("ghToken")}catch(e){}token=null;show(false)};
 function show(on){$("signin").hidden=on;$("app").hidden=!on;if(on)update()}
-if(token){show(true);load().catch(e=>{$("live").innerHTML=`<div class="empty err">${esc(e.message)}</div>`})}else show(false);
+$("refresh").onclick=async()=>{busy($("refresh"),"Refreshing");try{await load()}catch(e){$("live").innerHTML=`<div class="empty err">${esc(e.message)}</div>`}finally{idle($("refresh"))}};
+if(token){show(true);$("live").innerHTML=`<div class="empty">${SPIN}Loading…</div>`;load().catch(e=>{$("live").innerHTML=`<div class="empty err">${esc(e.message)}</div>`})}else show(false);
 </script>
 </body>
 </html>
