@@ -89,9 +89,10 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
       </div>
       <div class="sub" style="margin-top:6px">Your time zone. Empty Starts means now; empty Ends means until you remove it. Phones pick it up within about 10 minutes.</div>
       <div class="row">
-        <div><label for="minV">From app version</label><input id="minV" inputmode="numeric" placeholder="any"></div>
-        <div><label for="maxV">Up to app version</label><input id="maxV" inputmode="numeric" placeholder="any"></div>
+        <div><label for="minV">From app version</label><input id="minV" inputmode="numeric" placeholder="e.g. 110"></div>
+        <div><label for="maxV">Up to app version</label><input id="maxV" inputmode="numeric" placeholder="e.g. 118"></div>
       </div>
+      <div class="sub" style="margin-top:6px">Leave both empty for every version. The version number is in brackets on Settings' Report a problem, e.g. "0.1.116 (118)" is 118.</div>
       <label>Preview</label>
       <div id="preview"></div>
       <button class="btn" id="post" disabled>Post message</button>
