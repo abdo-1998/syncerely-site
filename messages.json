@@ -1,3 +1,6 @@
 {
-  "messages": []
+  "messages": [
+    { "id": "test-2026-11-25-normal", "title": "Test message", "text": "This is a test of Syncerely's important messages. It goes away today.", "expires": "2026-11-25" },
+    { "id": "test-2026-11-25-critical", "severity": "critical", "title": "Test: please update", "text": "This is a test of a critical message. It goes away today.", "link": "https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely", "expires": "2026-11-25" }
+  ]
 }
