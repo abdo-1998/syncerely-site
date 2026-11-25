@@ -34,6 +34,9 @@ textarea{min-height:84px;resize:vertical}
 .pill{display:inline-block;margin-top:8px;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:600;background:var(--amber);color:var(--amberBg)}
 .meta{font-size:12px;color:var(--sub);margin-top:6px}
 .rm{flex:none;align-self:flex-start;border:0;background:none;color:var(--red);font:inherit;font-weight:600;cursor:pointer;padding:2px 4px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:0;background:var(--field);color:var(--sub);padding:8px 14px;border-radius:999px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.chips button.on{background:var(--blue);color:var(--bg)}
 .note{font-size:13px;margin-top:12px;min-height:20px}
 .ok{color:var(--green)}.err{color:var(--red)}
 .empty{color:var(--sub);font-size:14px;padding:6px 2px}
@@ -78,8 +81,13 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
       <label for="link">Link (optional)</label>
       <select id="linkKind"><option value="">None</option><option value="play">Play Store (button says Update)</option><option value="url">A web page</option></select>
       <input id="link" placeholder="https://…" style="margin-top:8px" hidden>
-      <label for="expires">Last day it shows (optional)</label>
-      <input id="expires" type="date">
+      <label>How long it shows</label>
+      <div class="chips" id="dur"><button data-h="1">1 hour</button><button data-h="6">6 hours</button><button data-h="24">1 day</button><button data-h="168">1 week</button><button data-h="0" class="on">Until removed</button></div>
+      <div class="row">
+        <div><label for="starts">Starts</label><input id="starts" type="datetime-local"></div>
+        <div><label for="ends">Ends</label><input id="ends" type="datetime-local"></div>
+      </div>
+      <div class="sub" style="margin-top:6px">Your time zone. Empty Starts means now; empty Ends means until you remove it. Phones pick it up within about 10 minutes.</div>
       <div class="row">
         <div><label for="minV">From app version</label><input id="minV" inputmode="numeric" placeholder="any"></div>
         <div><label for="maxV">Up to app version</label><input id="maxV" inputmode="numeric" placeholder="any"></div>
@@ -108,7 +116,8 @@ const ICON={normal:'<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><pat
 function card(m,removable){
   const crit=m.severity==="critical";
   const btn=crit&&m.link?`<div><span class="pill">${m.link.includes("play.google.com")?"Update":"Read more"}</span></div>`:"";
-  const meta=[m.expires?`until ${m.expires}`:"",m.minVersion!=null||m.maxVersion!=null?`versions ${m.minVersion??"any"}–${m.maxVersion??"any"}`:"",removable?`id ${m.id}`:""].filter(Boolean).join(" · ");
+  const when=t=>new Date(t).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"});
+  const meta=[m.startsAt&&m.startsAt>Date.now()?`from ${when(m.startsAt)}`:"",m.endsAt?`until ${when(m.endsAt)}`:"",m.expires?`until ${m.expires}`:"",m.minVersion!=null||m.maxVersion!=null?`versions ${m.minVersion??"any"}–${m.maxVersion??"any"}`:"",removable?`id ${m.id}`:""].filter(Boolean).join(" · ");
   return `<div class="msg ${crit?"crit":""}">${ICON[crit?"critical":"normal"]}<div style="flex:1;min-width:0"><b>${esc(m.title||"Title")}</b><p>${esc(m.text||"Text")}</p>${btn}${meta?`<div class="meta">${esc(meta)}</div>`:""}</div>${removable?`<button class="rm" data-id="${esc(m.id)}">Remove</button>`:""}</div>`;
 }
 const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,"")),c=>c.charCodeAt(0)));
@@ -142,7 +151,9 @@ function draft(){
   if(kind==="critical")m.severity="critical";
   const lk=$("linkKind").value;
   if(lk==="play")m.link=PLAY;else if(lk==="url"&&$("link").value.trim())m.link=$("link").value.trim();
-  if($("expires").value)m.expires=$("expires").value;
+  const st=$("starts").value?new Date($("starts").value).getTime():null, en=$("ends").value?new Date($("ends").value).getTime():null;
+  if(st&&st>Date.now())m.startsAt=st;
+  if(en)m.endsAt=en;
   const a=parseInt($("minV").value,10),z=parseInt($("maxV").value,10);
   if(!isNaN(a))m.minVersion=a;if(!isNaN(z))m.maxVersion=z;
   return m;
@@ -151,6 +162,8 @@ function problem(m){
   if(!m.title||!m.text)return "Add a title and a text.";
   if(m.link&&!m.link.startsWith("https://"))return "The web page must start with https://";
   if(m.minVersion!=null&&m.maxVersion!=null&&m.minVersion>m.maxVersion)return "From version is above Up to version.";
+  if(m.endsAt&&m.endsAt<=Date.now())return "Ends is in the past.";
+  if(m.endsAt&&m.startsAt&&m.endsAt<=m.startsAt)return "Ends is before Starts.";
   return null;
 }
 function update(){
@@ -159,7 +172,12 @@ function update(){
 }
 function note(id,t,ok){const n=$(id);n.textContent=t;n.className="note "+(ok?"ok":"err")}
 document.querySelectorAll("#kind button").forEach(b=>b.onclick=()=>{kind=b.dataset.k;document.querySelectorAll("#kind button").forEach(x=>x.className=x===b?("on"+(kind==="critical"?" crit":"")):"");$("kindNote").textContent=kind==="critical"?"Warning colour, also one notification, no close button. It goes when it no longer applies, so set a last day or Up to version.":"A card with a close button.";update()});
-["title","text","link","expires","minV","maxV"].forEach(id=>$(id).oninput=update);
+["title","text","link","minV","maxV"].forEach(id=>$(id).oninput=update);
+const local=t=>{const d=new Date(t);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)};
+function pick(h){document.querySelectorAll("#dur button").forEach(b=>b.className=b.dataset.h==String(h)?"on":"");
+  if(h===null)return;const base=$("starts").value?new Date($("starts").value).getTime():Date.now();$("ends").value=h?local(base+h*3600000):"";update()}
+document.querySelectorAll("#dur button").forEach(b=>b.onclick=()=>pick(+b.dataset.h));
+["starts","ends"].forEach(id=>$(id).oninput=()=>{if(id==="ends")pick(null);else{const on=document.querySelector("#dur button.on");if(on&&+on.dataset.h)pick(+on.dataset.h)}update()});
 $("linkKind").onchange=()=>{$("link").hidden=$("linkKind").value!=="url";update()};
 $("post").onclick=async()=>{
   const m=draft(),p=problem(m);if(p)return note("postNote",p,false);
@@ -168,7 +186,7 @@ $("post").onclick=async()=>{
   const ordered={id:m.id,...m};
   $("post").disabled=true;note("postNote","Posting…",true);
   try{await save({...current,messages:[...current.messages,ordered]},`Post message: ${m.title}`);
-    ["title","text","link","expires","minV","maxV"].forEach(id=>$(id).value="");$("linkKind").value="";$("link").hidden=true;
+    ["title","text","link","starts","ends","minV","maxV"].forEach(id=>$(id).value="");pick(0);$("linkKind").value="";$("link").hidden=true;
     note("postNote","Posted. It's live in about a minute; phones show it at their next daily check.",true);update();$("postNote").className="note ok";
   }catch(e){note("postNote",e.message,false);$("post").disabled=false}
 };
