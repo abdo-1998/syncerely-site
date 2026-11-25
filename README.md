@@ -12,7 +12,20 @@ The app reads `messages.json` at most once a day (when it opens, and after a bac
 about the user is sent. Changes go live about a minute after you save, and users see them at their next
 daily read.
 
-**From a phone or computer:**
+### The easy way: a form (phone or computer)
+
+1. Open https://github.com/abdo-1998/syncerely-site/issues/new/choose (or the GitHub app: this repo,
+   Issues, New).
+2. Pick **Send a message to the app**, fill in the title and text (and, if you want, how important,
+   a link, the last day and app versions), and submit.
+3. Within a minute the issue gets a comment with the message's id and closes itself: it's live.
+
+To take one down: **Remove a message**, with its id (or `all`). If something in the form is wrong,
+the issue says why and closes; nothing changes, so open a new one.
+
+Only issues you open are used. Anyone else's issue is ignored, since the repo is public.
+
+### By hand
 
 1. Open https://github.com/abdo-1998/syncerely-site/edit/main/messages.json (sign in to GitHub).
 2. Add a message inside the `[ ]` (copy one of the examples below).
