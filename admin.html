@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Syncerely messages</title>
+<style>
+:root{--bg:#0c1220;--card:#1a2133;--field:#232a3b;--line:#2c3550;--text:#e6e9f2;--sub:#9aa3b8;--blue:#a9c1f7;--amber:#f6c177;--amberBg:#3a2a17;--red:#f28b82;--green:#8fd6a5}
+@media (prefers-color-scheme:light){:root{--bg:#f4f6fb;--card:#fff;--field:#eef1f7;--line:#dde2ee;--text:#1b2233;--sub:#5d6680;--blue:#3d63c9;--amber:#a36410;--amberBg:#fdf0dc;--red:#c0392b;--green:#2e8b57}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:24px;margin:8px 0 4px}h2{font-size:17px;margin:28px 0 10px}
+.sub{color:var(--sub);font-size:13px}
+.card{background:var(--card);border-radius:16px;padding:16px;margin-top:10px}
+label{display:block;font-size:13px;color:var(--sub);margin:14px 0 6px}
+input,textarea,select{width:100%;background:var(--field);color:var(--text);border:0;border-radius:12px;padding:12px 14px;font:inherit;outline:none}
+input:focus,textarea:focus{box-shadow:0 0 0 2px var(--blue)}
+textarea{min-height:84px;resize:vertical}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.seg{display:flex;background:var(--field);border-radius:999px;padding:4px}
+.seg button{flex:1;border:0;background:none;color:var(--sub);padding:9px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--text)}
+.seg button.on.crit{color:var(--amber)}
+.btn{display:block;width:100%;border:0;border-radius:999px;padding:13px;font:inherit;font-weight:600;cursor:pointer;background:var(--blue);color:var(--bg);margin-top:18px}
+.btn:disabled{opacity:.45;cursor:default}
+.ghost{background:none;border:1px solid var(--line);color:var(--text)}
+.msg{display:flex;gap:10px;border-radius:14px;padding:12px 14px;margin-top:10px;background:var(--field)}
+.msg.crit{background:var(--amberBg)}
+.msg .ic{width:20px;height:20px;flex:none;margin-top:2px;color:var(--blue)}
+.msg.crit .ic{color:var(--amber)}
+.msg b{display:block}.msg p{margin:2px 0 0;color:var(--sub);font-size:13px}
+.pill{display:inline-block;margin-top:8px;border-radius:999px;padding:5px 14px;font-size:12px;font-weight:600;background:var(--amber);color:var(--amberBg)}
+.meta{font-size:12px;color:var(--sub);margin-top:6px}
+.rm{flex:none;align-self:flex-start;border:0;background:none;color:var(--red);font:inherit;font-weight:600;cursor:pointer;padding:2px 4px}
+.note{font-size:13px;margin-top:12px;min-height:20px}
+.ok{color:var(--green)}.err{color:var(--red)}
+.empty{color:var(--sub);font-size:14px;padding:6px 2px}
+a{color:var(--blue)}
+details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Syncerely messages</h1>
+  <div class="sub">What you post here shows on every user's Home within a day.</div>
+
+  <section id="signin" class="card" hidden>
+    <b>Connect to GitHub, once on this device</b>
+    <p class="sub">Paste a GitHub token that can change this site's files. It stays in this browser only.</p>
+    <details><summary>How to make the token</summary>
+      <ol class="sub" style="padding-left:18px">
+        <li>Open <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub, new fine-grained token</a>.</li>
+        <li>Name it "Syncerely messages". Repository access: <b>Only select repositories</b>, pick <b>syncerely-site</b>.</li>
+        <li>Permissions, Repository: <b>Contents: Read and write</b>. Nothing else.</li>
+        <li>Generate, copy, and paste it here.</li>
+      </ol>
+    </details>
+    <label for="token">Token</label>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <button class="btn" id="connect">Connect</button>
+    <div class="note" id="signinNote"></div>
+  </section>
+
+  <section id="app" hidden>
+    <h2>Live now</h2>
+    <div id="live"><div class="empty">Loading…</div></div>
+
+    <h2>New message</h2>
+    <div class="card">
+      <div class="seg" id="kind"><button data-k="normal" class="on">Normal</button><button data-k="critical">Critical</button></div>
+      <div class="sub" id="kindNote" style="margin-top:8px">A card with a close button.</div>
+      <label for="title">Title</label>
+      <input id="title" maxlength="80" placeholder="Google Drive is slow today">
+      <label for="text">Text</label>
+      <textarea id="text" maxlength="400" placeholder="Uploads may take longer until tonight. Nothing is lost; syncs carry on."></textarea>
+      <label for="link">Link (optional)</label>
+      <select id="linkKind"><option value="">None</option><option value="play">Play Store (button says Update)</option><option value="url">A web page</option></select>
+      <input id="link" placeholder="https://…" style="margin-top:8px" hidden>
+      <div class="row">
+        <div><label for="expires">Last day it shows</label><input id="expires" type="date"></div>
+        <div><label for="minV">From version</label><input id="minV" inputmode="numeric" placeholder="any"></div>
+        <div><label for="maxV">Up to version</label><input id="maxV" inputmode="numeric" placeholder="any"></div>
+      </div>
+      <label>Preview</label>
+      <div id="preview"></div>
+      <button class="btn" id="post" disabled>Post message</button>
+      <div class="note" id="postNote"></div>
+    </div>
+
+    <details><summary>This device</summary>
+      <p class="sub">Connected with a token saved in this browser.</p>
+      <button class="btn ghost" id="signout">Forget the token on this device</button>
+    </details>
+  </section>
+</main>
+<script>
+const REPO="abdo-1998/syncerely-site", FILE="messages.json", API=`https://api.github.com/repos/${REPO}/contents/${FILE}`;
+const PLAY="https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely";
+const $=id=>document.getElementById(id);
+let token=null, kind="normal", current={messages:[]}, sha=null;
+try{token=localStorage.getItem("ghToken")}catch(e){}
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ICON={normal:'<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16z"/></svg>',critical:'<svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>'};
+function card(m,removable){
+  const crit=m.severity==="critical";
+  const btn=crit&&m.link?`<div><span class="pill">${m.link.includes("play.google.com")?"Update":"Read more"}</span></div>`:"";
+  const meta=[m.expires?`until ${m.expires}`:"",m.minVersion!=null||m.maxVersion!=null?`versions ${m.minVersion??"any"}–${m.maxVersion??"any"}`:"",removable?`id ${m.id}`:""].filter(Boolean).join(" · ");
+  return `<div class="msg ${crit?"crit":""}">${ICON[crit?"critical":"normal"]}<div style="flex:1;min-width:0"><b>${esc(m.title||"Title")}</b><p>${esc(m.text||"Text")}</p>${btn}${meta?`<div class="meta">${esc(meta)}</div>`:""}</div>${removable?`<button class="rm" data-id="${esc(m.id)}">Remove</button>`:""}</div>`;
+}
+const b64d=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,"")),c=>c.charCodeAt(0)));
+const b64e=s=>{const b=new TextEncoder().encode(s);let x="";b.forEach(c=>x+=String.fromCharCode(c));return btoa(x)};
+async function gh(method,body){
+  const r=await fetch(API+(method==="GET"?`?t=${Date.now()}`:""),{method,headers:{Authorization:`Bearer ${token}`,Accept:"application/vnd.github+json"},body:body?JSON.stringify(body):undefined});
+  if(!r.ok){const e=new Error(r.status===401?"The token isn't valid any more. Forget it and connect again.":r.status===404||r.status===403?"The token can't change syncerely-site. Check it has Contents: Read and write on that repo.":r.status===409?"Someone changed the messages meanwhile. Try again.":`GitHub said ${r.status}.`);e.status=r.status;throw e}
+  return r.json();
+}
+async function load(){
+  const f=await gh("GET");sha=f.sha;
+  try{current=JSON.parse(b64d(f.content));}catch(e){current={messages:[]}}
+  current.messages=current.messages||[];render();
+}
+function render(){
+  $("live").innerHTML=current.messages.length?current.messages.map(m=>card(m,true)).join(""):'<div class="empty">No messages. Users see nothing extra on Home.</div>';
+  document.querySelectorAll(".rm").forEach(b=>b.onclick=()=>remove(b.dataset.id));
+}
+async function save(next,what){
+  const f=await gh("GET");
+  const body={message:what,content:b64e(JSON.stringify(next,null,2)+"\n"),sha:f.sha};
+  await gh("PUT",body);await load();
+}
+async function remove(id){
+  const m=current.messages.find(x=>x.id===id);
+  if(!confirm(`Remove "${m?m.title:id}"? Phones drop it at their next daily check.`))return;
+  try{await save({...current,messages:current.messages.filter(x=>x.id!==id)},`Remove message ${id}`);note("postNote","Removed.",true)}catch(e){note("postNote",e.message,false)}
+}
+function draft(){
+  const m={title:$("title").value.trim(),text:$("text").value.trim().replace(/\s+/g," ")};
+  if(kind==="critical")m.severity="critical";
+  const lk=$("linkKind").value;
+  if(lk==="play")m.link=PLAY;else if(lk==="url"&&$("link").value.trim())m.link=$("link").value.trim();
+  if($("expires").value)m.expires=$("expires").value;
+  const a=parseInt($("minV").value,10),z=parseInt($("maxV").value,10);
+  if(!isNaN(a))m.minVersion=a;if(!isNaN(z))m.maxVersion=z;
+  return m;
+}
+function problem(m){
+  if(!m.title||!m.text)return "Add a title and a text.";
+  if(m.link&&!m.link.startsWith("https://"))return "The web page must start with https://";
+  if(m.minVersion!=null&&m.maxVersion!=null&&m.minVersion>m.maxVersion)return "From version is above Up to version.";
+  return null;
+}
+function update(){
+  const m=draft();$("preview").innerHTML=card(m,false);
+  const p=problem(m);$("post").disabled=!!p;note("postNote",m.title||m.text?(p||""):"",false);
+}
+function note(id,t,ok){const n=$(id);n.textContent=t;n.className="note "+(ok?"ok":"err")}
+document.querySelectorAll("#kind button").forEach(b=>b.onclick=()=>{kind=b.dataset.k;document.querySelectorAll("#kind button").forEach(x=>x.className=x===b?("on"+(kind==="critical"?" crit":"")):"");$("kindNote").textContent=kind==="critical"?"Warning colour, also one notification, no close button. It goes when it no longer applies, so set a last day or Up to version.":"A card with a close button.";update()});
+["title","text","link","expires","minV","maxV"].forEach(id=>$(id).oninput=update);
+$("linkKind").onchange=()=>{$("link").hidden=$("linkKind").value!=="url";update()};
+$("post").onclick=async()=>{
+  const m=draft(),p=problem(m);if(p)return note("postNote",p,false);
+  const slug=m.title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30);
+  m.id=`${new Date().toISOString().slice(0,10)}-${slug}-${Math.random().toString(36).slice(2,6)}`;
+  const ordered={id:m.id,...m};
+  $("post").disabled=true;note("postNote","Posting…",true);
+  try{await save({...current,messages:[...current.messages,ordered]},`Post message: ${m.title}`);
+    ["title","text","link","expires","minV","maxV"].forEach(id=>$(id).value="");$("linkKind").value="";$("link").hidden=true;
+    note("postNote","Posted. It's live in about a minute; phones show it at their next daily check.",true);update();$("postNote").className="note ok";
+  }catch(e){note("postNote",e.message,false);$("post").disabled=false}
+};
+$("connect").onclick=async()=>{
+  token=$("token").value.trim();if(!token)return;
+  note("signinNote","Checking…",true);
+  try{await load();try{localStorage.setItem("ghToken",token)}catch(e){}show(true)}catch(e){token=null;note("signinNote",e.message,false)}
+};
+$("signout").onclick=()=>{try{localStorage.removeItem("ghToken")}catch(e){}token=null;show(false)};
+function show(on){$("signin").hidden=on;$("app").hidden=!on;if(on)update()}
+if(token){show(true);load().catch(e=>{$("live").innerHTML=`<div class="empty err">${esc(e.message)}</div>`})}else show(false);
+</script>
+</body>
+</html>

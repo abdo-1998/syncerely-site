@@ -12,18 +12,19 @@ The app reads `messages.json` at most once a day (when it opens, and after a bac
 about the user is sent. Changes go live about a minute after you save, and users see them at their next
 daily read.
 
-### The easy way: a form (phone or computer)
+### The easy way: the messages page (phone or computer)
 
-1. Open https://github.com/abdo-1998/syncerely-site/issues/new/choose (or the GitHub app: this repo,
-   Issues, New).
-2. Pick **Send a message to the app**, fill in the title and text (and, if you want, how important,
-   a link, the last day and app versions), and submit.
-3. Within a minute the issue gets a comment with the message's id and closes itself: it's live.
+Open https://abdo-1998.github.io/syncerely-site/admin.html
 
-To take one down: **Remove a message**, with its id (or `all`). If something in the form is wrong,
-the issue says why and closes; nothing changes, so open a new one.
+- **Live now** lists what users see, each with **Remove**.
+- **New message**: Normal or Critical, a title and text, an optional link (the Play Store makes the
+  button say Update), a last day, and which app versions. The preview shows the card as Home will.
+  **Post message** and it's live in about a minute.
 
-Only issues you open are used. Anyone else's issue is ignored, since the repo is public.
+The first time on a device it asks for a GitHub token, kept only in that browser:
+GitHub, Settings, Developer settings, Fine-grained tokens, Generate new token. Repository access:
+only **syncerely-site**. Permissions: **Contents: Read and write**, nothing else. If a device is lost,
+delete the token on GitHub and it stops working everywhere.
 
 ### By hand
 
