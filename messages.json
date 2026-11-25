@@ -1,11 +1,3 @@
 {
-  "messages": [
-    {
-      "id": "2026-11-25-test-85xv",
-      "title": "test",
-      "text": "test",
-      "severity": "critical",
-      "link": "https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely"
-    }
-  ]
+  "messages": []
 }
