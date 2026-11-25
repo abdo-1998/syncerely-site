@@ -78,10 +78,11 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
       <label for="link">Link (optional)</label>
       <select id="linkKind"><option value="">None</option><option value="play">Play Store (button says Update)</option><option value="url">A web page</option></select>
       <input id="link" placeholder="https://…" style="margin-top:8px" hidden>
+      <label for="expires">Last day it shows (optional)</label>
+      <input id="expires" type="date">
       <div class="row">
-        <div><label for="expires">Last day it shows</label><input id="expires" type="date"></div>
-        <div><label for="minV">From version</label><input id="minV" inputmode="numeric" placeholder="any"></div>
-        <div><label for="maxV">Up to version</label><input id="maxV" inputmode="numeric" placeholder="any"></div>
+        <div><label for="minV">From app version</label><input id="minV" inputmode="numeric" placeholder="any"></div>
+        <div><label for="maxV">Up to app version</label><input id="maxV" inputmode="numeric" placeholder="any"></div>
       </div>
       <label>Preview</label>
       <div id="preview"></div>
