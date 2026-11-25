@@ -57,7 +57,7 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
 <body>
 <main>
   <h1>Syncerely messages</h1>
-  <div class="sub">What you post here shows on every user's Home: within about 10 minutes in open apps, otherwise the next time the app opens.</div>
+  <div class="sub">What you post here shows on every user's Home: within about 2 minutes in open apps, otherwise the next time the app opens.</div>
 
   <section id="signin" class="card" hidden>
     <b>Connect to GitHub, once on this device</b>
@@ -98,7 +98,7 @@ details{margin-top:14px}summary{cursor:pointer;color:var(--sub);font-size:13px}
         <div><label for="starts">Starts</label><input id="starts" type="datetime-local"></div>
         <div><label for="ends">Ends</label><input id="ends" type="datetime-local"></div>
       </div>
-      <div class="sub" style="margin-top:6px">Your time zone. Empty Starts means now; empty Ends means until you remove it. Phones pick it up within about 10 minutes.</div>
+      <div class="sub" style="margin-top:6px">Your time zone. Empty Starts means now; empty Ends means until you remove it. Phones pick it up within about 2 minutes.</div>
       <div class="row">
         <div><label for="minV">From app version</label><input id="minV" inputmode="numeric" placeholder="e.g. 110"></div>
         <div><label for="maxV">Up to app version</label><input id="maxV" inputmode="numeric" placeholder="e.g. 118"></div>
@@ -167,7 +167,7 @@ function render(){
   $("live").innerHTML=html||'<div class="empty">No messages. Users see nothing extra on Home.</div>';
   document.querySelectorAll(".rm").forEach(b=>b.onclick=()=>remove(b.dataset.id,b));
   const pending=current.messages.some(m=>status(m)[0]==="Publishing")||gone.length>0;
-  $("siteState").innerHTML=site===null?"Couldn't read the public site just now.":pending?SPIN+"The site is updating. This list follows it.":`Site checked ${new Date(siteAt).toLocaleTimeString(undefined,{timeStyle:"short"})}. Open apps pick changes up within about 10 minutes.`;
+  $("siteState").innerHTML=site===null?"Couldn't read the public site just now.":pending?SPIN+"The site is updating. This list follows it.":`Site checked ${new Date(siteAt).toLocaleTimeString(undefined,{timeStyle:"short"})}. Open apps pick changes up within about a minute after the site updates.`;
   if(pending&&!watching)watch();
 }
 // While something is publishing, re-read the public site every 5 s (up to 3 minutes).
@@ -186,7 +186,7 @@ async function save(next,what){
 }
 async function remove(id,btn){
   const m=current.messages.find(x=>x.id===id);
-  if(!confirm(`Remove "${m?m.title:id}"? Open apps drop it within about 10 minutes.`))return;
+  if(!confirm(`Remove "${m?m.title:id}"? Open apps drop it within about 2 minutes.`))return;
   if(btn)busy(btn,"Removing");
   try{await save({...current,messages:current.messages.filter(x=>x.id!==id)},`Remove message ${id}`)}catch(e){if(btn)idle(btn);alert(e.message)}
 }
@@ -230,7 +230,7 @@ $("post").onclick=async()=>{
   const ordered={id:m.id,...m};
   busy($("post"),"Posting");note("postNote","",true);
   const t0=Date.now(),steps=$("steps");steps.hidden=false;
-  const show=(a,b,c)=>steps.innerHTML=`<div class="${a}">${a==="now"?SPIN:"✓ "}Saved to GitHub</div><div class="${b}">${b==="now"?SPIN:b==="done"?"✓ ":"○ "}Live on the site${b==="done"?` (after ${Math.round((Date.now()-t0)/1000)} s)`:""}</div><div class="${c}">${c==="done"?"✓ ":"○ "}Phones: open apps within about 10 minutes, others when opened</div>`;
+  const show=(a,b,c)=>steps.innerHTML=`<div class="${a}">${a==="now"?SPIN:"✓ "}Saved to GitHub</div><div class="${b}">${b==="now"?SPIN:b==="done"?"✓ ":"○ "}Live on the site${b==="done"?` (after ${Math.round((Date.now()-t0)/1000)} s)`:""}</div><div class="${c}">${c==="done"?"✓ ":"○ "}Phones: open apps within about a minute, others when opened</div>`;
   show("now","","");
   try{await save({...current,messages:[...current.messages,ordered]},`Post message: ${m.title}`);
     idle($("post"));["title","text","link","starts","ends","minV","maxV"].forEach(id=>$(id).value="");pick(0);$("linkKind").value="";$("link").hidden=true;update();
