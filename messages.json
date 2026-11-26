@@ -10,6 +10,13 @@
       "title": "Yay another test with just a link",
       "text": "this is reuireing more and more testing",
       "link": "https://google.com"
+    },
+    {
+      "id": "2026-11-26-holy-hell-this-is-a-huge-warni-ufaw",
+      "title": "holy hell this is a huge warning",
+      "text": "alert alert alertalert alert alertalert alert alertalert alert alert",
+      "severity": "critical",
+      "link": "https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely"
     }
   ]
 }
