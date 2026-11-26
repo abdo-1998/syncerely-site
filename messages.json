@@ -4,6 +4,12 @@
       "id": "2026-11-26-test-pone-more-time-pgok",
       "title": "Test pone more time",
       "text": "This is requiring more testing"
+    },
+    {
+      "id": "2026-11-26-yay-another-test-with-just-a-l-qr0v",
+      "title": "Yay another test with just a link",
+      "text": "this is reuireing more and more testing",
+      "link": "https://google.com"
     }
   ]
 }
