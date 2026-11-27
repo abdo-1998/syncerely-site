@@ -1,3 +1,9 @@
 {
-  "messages": []
+  "messages": [
+    {
+      "id": "2026-11-27-test-live-notification-bkp0",
+      "title": "Test live notification",
+      "text": "This is a test live notification"
+    }
+  ]
 }
