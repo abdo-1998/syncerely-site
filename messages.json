@@ -4,6 +4,13 @@
       "id": "2026-11-27-test-live-notification-bkp0",
       "title": "Test live notification",
       "text": "This is a test live notification"
+    },
+    {
+      "id": "2026-11-27-this-is-a-test-live-notificati-a5pz",
+      "title": "This is a test live notification",
+      "text": "Bloomsbury Big Top, 93 Guilford St, London WC1N 1DN",
+      "severity": "critical",
+      "link": "https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely"
     }
   ]
 }
