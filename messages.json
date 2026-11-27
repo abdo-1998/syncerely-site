@@ -11,6 +11,12 @@
       "text": "Bloomsbury Big Top, 93 Guilford St, London WC1N 1DN",
       "severity": "critical",
       "link": "https://play.google.com/store/apps/details?id=com.abdosdevstudio.syncerely"
+    },
+    {
+      "id": "2026-11-27-this-is-another-test-n614",
+      "title": "This is another test",
+      "text": "Uploads may be slow today.",
+      "severity": "critical"
     }
   ]
 }
